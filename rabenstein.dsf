@@ -1,0 +1,3187 @@
+; The Curse of Rabenstein
+;
+; Copyright (C) 2020 Stefan Vogt, Puddle Soft.
+; http://8bitgames.itch.io | http://puddlesoft.net
+;
+#ifdef "next"
+#extern "MLV_NEXT.BIN"
+#endif
+#ifdef "plus3"
+#extern "MLV_P3.BIN"
+#endif
+#ifdef "esxdos"
+#extern "MLV_ESX.BIN"
+#endif
+#ifdef "c64"
+#extern "MLV_C64.BIN"
+#endif
+#ifdef "cp4"
+#extern "MLV_CP4.BIN"
+#endif
+#ifdef "cpc"
+#extern "MLV_CPC.BIN"
+#int "MLV_CPC_INT.BIN"
+#endif
+;
+; game-specific target groups
+;
+#ifdef "plus3"
+#define nographics 1
+#endif
+#ifdef "esxdos"
+#define nographics 1
+#endif
+
+/CTL
+_
+#define Turns_TAB "COLS-13"
+;
+#define NOTCREATED 252
+#define TRUE 1
+#define FALSE 0
+#define YES 255
+#define NO 0
+;
+; Attributes for system
+;
+#define WEARABLE  23            ;Current object is wearable
+#define CONTAINER 31            ;Current object is a container
+#define LISTED    55            ;Objects - listed by LISTOBJ etc
+#define OA_CLIST  54            ; - continous list
+#define OO_CLIST  64
+#define TIMEOUT   87            ;If Timeout last frame
+#define IA_RBUF   85            ;Input - recall buffer
+#define IO_RBUF   32
+#define IA_PINP   84            ; - reprint in stream
+#define IO_PINP   16
+#define IA_CSTR   83            ; - clear stream
+#define IO_CSTR   8
+#define IA_TAKEY  82            ; - timeout on any key
+#define IO_TAKEY  4
+#define IA_TMORE  81            ; - timeout on More...
+#define IO_TMORE  2
+#define IA_TSTAR  80            ; - timeout at start of input
+#define IO_TSTAR  1
+#define GMODE     247           ;Graphics - available
+#define GA_MDRW   246           ; - Invisible draw (drawstring)
+#define GO_MDRW   64
+#define GA_POFF   245           ; - Pictures OFF (drawstring)
+#define GO_POFF   32
+#define GA_WKEY   244           ; - Wait after drawing (drawstring)
+#define GO_WKEY   16
+#define GA_CBOR   243           ; - Change BORDER (drawstring)
+#define GO_CBOR   8
+#define MOUSE     240           ;mouse available (!DRAW only)
+;
+#define O2      152     ; Offset of second object attributes
+;
+; System flags 0 - 63
+;
+#define Dark      0
+#define NOCarr    1
+#define Work1     2     ; These are system as we consider the stack such
+#define Work2     3
+#define Stack    24     ; A small stack (always 2 bytes pushed) 10 pushes
+#define EMPTY    23     ; Stack can run from here
+#define FULL      3     ; to here - There will be an internal one soon
+#define GFXFail  20
+#define O2Num    25     ; 1st free in system 64
+#define O2Con    26     ; Object 2 is a container
+#define O2Loc    27
+#define DarkF    28
+#define GFlags   29     ; This is best tested using HASAT GMODE
+#define Score    30
+#define Turns    31     ; 2 bytes
+#define Verb     33
+#define Noun1    34
+#define Adject1  35
+#define Adverb   36
+#define MaxCarr  37
+#define Player   38
+#define O2Att    39     ; Using Flags 39 and 40 to contain attribs for other obj
+#define InStream 41
+#define Prompt   42
+#define Prep     43
+#define Noun2    44
+#define Adject2  45
+#define CPNoun   46
+#define CPAdject 47
+#define Time     48
+#define TIFlags  49
+#define DAObjNo  50
+#define CONum    51
+#define Strength 52
+#define OFlags   53
+#define COLoc    54
+#define COWei    55
+#define COCon    56
+#define COWR     57
+#define COAtt    58
+#define Key1     60
+#define Key2     61
+#define ScMode   62     ; 2=Text, 4=CGA, 13=EGA, 141=VGA
+#define CurWin   63     ; Which window is active at the moment
+;
+; User flags 64-255
+;
+#define talkedToInnkeeper 64
+#define talkedToVillagers 65
+#define prayedToGod 66
+#define usedStoup 67
+#define pickedUpTorch 68
+#define priestWantsWater 69
+#define discoveredRope 70
+#define searchedHay 71
+#define searchedDebris 72
+#define searchedGraves 73
+#define inFight 74
+#define refreshMaluva 75
+#define picToload 76
+;
+; Custom defines 
+;
+#define o_well 0                    ;objects
+#define o_stableDoorLocked 1
+#define o_stableDoorUnlocked 2
+#define o_wellWithRope 3
+#define o_wellWithRopeBucket 4
+#define o_bottleFreshWater 5
+#define o_bell 6
+#define o_churchDoorClosed 7
+#define o_churchDoorOpen 8
+#define o_priest 9
+#define o_stoup 10
+#define o_rope 11
+#define o_cloakedFigure 12
+#define o_torch 13
+#define o_innkeeper 14
+#define o_emptyBottle 15
+#define o_villagers 16
+#define o_stableKey 17
+#define o_fireplace 18
+#define o_bucket 19
+#define o_bed 20
+#define o_torchBurning 21
+#define o_carriage 22
+#define o_horses 23
+#define o_coachman 24
+#define o_forestGround 25
+#define o_crucifix 26
+#define o_clothScrap 27
+#define o_sheetRotting 28
+#define o_sheetTiedToBed 29
+#define o_blanket 30
+#define o_bedMusty 31
+#define o_monument 32
+#define o_shovel 33
+#define o_soilPile 34
+#define o_soilHoly 35
+#define o_graveOfJohann 36
+#define o_coffinJohann 37
+#define o_bottleHolyWater 38
+#define o_skeleton 39
+#define o_mattress 40
+#define o_window 41
+#define o_book 42
+#define o_passageDown 43
+#define o_windowCovered 44
+#define o_vampireCount 45
+#define o_vampireInPain 46
+#define o_coffinOfVampire 47
+#define o_hay 48
+#define o_mausoleum 50
+#define o_shadow 51
+#define o_debris 52
+#define o_bookshelves 53
+#define o_gravesOfRabenstein 54
+#define m_noPointDoing 37           ;messages
+#define m_architecture 38
+#define m_impressive 39
+#define m_wanderOff 40
+#define m_breakTheCurse 41
+;
+/VOC
+;
+; Game vocabulary section.
+;
+; Movements ie verbs and nouns < 14
+;
+N       2       noun
+NORTH   2       noun
+S       3       noun
+SOUTH   3       noun
+E       4       noun
+EAST    4       noun
+W       5       noun
+WEST    5       noun
+NE      6       noun
+NW      7       noun
+SE      8       noun
+SW      9       noun
+U       10      noun
+UP      10      noun
+ASCEN   10      verb
+D       11      noun
+DOWN    11      noun
+DESCE   11      verb
+IN      12      verb
+INSID   12      noun
+OUT     13      verb
+OUTSI   13      verb
+;
+; Nouns   <20 means can be used as verbs
+;         <50 means a proper noun ie not an "IT"
+;
+I       14      noun
+INVEN   14      noun
+ALL     20      noun
+LOT     20      noun
+EVERY   20      noun
+;
+; User defined objects, if any.
+;
+WELL      50      noun
+DOOR      51      noun
+BOTTLE    52      noun
+BELL      53      noun
+DOORB     53      noun
+PRIEST    54      noun
+STOUP     55      noun
+ROPE      56      noun
+FIGURE    57      noun
+TORCH     58      noun
+INNKEEP   59      noun
+VILLAGE   60      noun
+GROUP     60      noun
+KEY       61      noun
+FIREPLA   62      noun
+ASHES     62      noun
+BUCKET    63      noun
+BED       64      noun
+CARRIAG   65      noun
+HORSES    66      noun
+COACHMA   67      noun
+GROUND    68      noun
+ELEVA     68      noun
+CRUCIFI   69      noun
+NECKLAC   69      noun
+CLOTH     70      noun
+SCRAP     70      noun
+SHEET     71      noun
+BLANKET   72      noun
+MONUMEN   73      noun
+SHOVEL    74      noun
+SOIL      75      noun
+GRAVE     76      noun
+COFFIN    77      noun
+WATER     78      noun
+SKELETO   79      noun
+MATTRES   80      noun
+WINDOW    81      noun
+SKY       81      noun
+INN       81      noun
+BOOK      82      noun
+PASSAGE   83      noun
+VAMPIRE   84      noun
+STABLE    85      noun
+MAUSOLE   86      noun
+SHADOW    87      noun
+PEWS      88      noun
+ROWS      88      noun
+HAY       99      noun
+HEAP      99      noun
+DEBRIS    100     noun
+BOOKS     101     noun
+LITERAT   101     noun
+SHELVES   101     noun
+HOUSES    102     noun
+MOON      103     noun
+CHURCH    104     noun
+SCENES    104     noun
+ALTAR     105     noun
+FOREST    106     noun
+THICKET   106     noun
+MANOR     107     noun
+LAMP      108     noun
+CROSS     109     noun
+WARDROB   110     noun
+TREE      111     noun
+TREES     111     noun
+FURNISH   112     noun
+BLOOD     113     noun
+TRAIL     113     noun
+FOG       114     noun
+FLOOR     115     noun
+RUIN      116     noun
+RUINS     116     noun
+GOD       117     noun
+CARVI     118     noun
+CHAND     119     noun
+SEATS     120     noun
+COUNT     121     noun
+STAIR     122     noun
+SMELL     123     noun
+PLANT     124     noun
+WEEDS     124     noun
+MOSS      124     noun
+PATH      125     noun
+;
+; Verbs
+;
+GET     20      verb
+TAKE    20      verb
+GRAB    20      verb
+DROP    21      verb
+PUT     21      verb
+REMOV   22      verb
+WEAR    23      verb
+R       24      verb
+REDES   24      verb
+LOOK    24      verb
+L       24      verb
+QUIT    25      verb
+STOP    25      verb
+SAVE    26      verb
+LOAD    27      verb
+RAMSA   28      verb
+RAMLO   29      verb
+X       30      verb
+EX      30      verb
+EXAMI   30      verb
+READ    30      verb
+SAY     31      verb
+ASK     31      verb
+TALK    31      verb
+SPEAK   31      verb
+EXITS   32      verb
+HELP    33      verb
+EMPTY   34      verb
+INSERT  35      verb
+PLACE   35      verb
+EXTRACT 36      verb
+USE     37      verb
+THROW   37      verb
+RING    37      verb
+LIGHT   37      verb
+FILL    37      verb
+RIDE    37      verb
+MOVE    37      verb
+TIE     37      verb
+PUDDLE  38      verb
+CREDIT  38      verb
+OPEN    39      verb
+UNLOCK  39      verb
+LOCK    40      verb
+CLOSE   40      verb
+GIVE    41      verb
+SHOW    41      verb
+PRAY    42      verb
+SEARCH  43      verb
+SLEEP   44      verb
+DIG     45      verb
+PUSH    46      verb
+PULL    47      verb
+XYZZY   48      verb
+VERSION 49      verb
+ENTER   50      verb
+FEED    51      verb
+EAT     52      verb
+DRINK   52      verb
+CONSU   52      verb
+SIT     53      verb
+;
+; Adjectives
+;
+SMALL   2       adjective
+BIG     3       adjective
+LARGE   3       adjective
+OLD     4       adjective
+NEW     5       adjective
+HARD    6       adjective
+SOFT    7       adjective
+SHORT   8       adjective
+LONG    9       adjective
+HOLY    10      adjective
+ORDINAR 11      adjective
+;
+; Adverbs
+;
+QUICK   2       adverb
+SLOWL   3       adverb
+QUIET   4       adverb
+LOUDL   5       adverb
+CAREF   6       adverb
+SOFTL   6       adverb
+GENTL   6       adverb
+;
+; Prepositions
+;
+TO      2       preposition
+FROM    3       preposition
+;IN      4       preposition
+;OUT     5       preposition
+THROU   6       preposition
+OVER    7       preposition
+UNDER   8       preposition
+BY      9       preposition
+ON      10      preposition
+OFF     11      preposition
+AT      12      preposition
+EXCEP   13      preposition
+;
+; Pronouns
+;
+IT      2       pronoun
+THEM    2       pronoun
+;
+; Conjunctions (improperly called conjugations in DAAD). :-)
+;
+AND     2       conjugation
+THEN    2       conjugation
+;
+;------------------------------------------------------------------------------
+/STX
+;
+; System Message Texts (2nd person).
+;
+/0 "It's too dark to see anything."
+/1 "You notice: "
+/2 ""
+/3 ""
+/4 ""
+/5 ""
+/6 "You wonder if that will help you and decide that it won't.#n"
+/7 "You can't go that way.#n"
+/8 "That wouldn't help you much.#n"
+/9 "You're carrying:#n"
+/10 "#nYou're wearing:#n"
+/11 "" ;*Spare
+/12 "Are you sure?"
+/13 "Would you like to try again?"
+/14 "" ; *Spare
+/15 "Done.#n"
+#ifdef "c64"
+/16 "      Press any key to continue.#n"
+#endif
+#ifdef "cp4"
+/16 "      Press any key to continue.#n"
+#endif
+#ifdef "cpc"
+/16 "      Press any key to continue.#n"
+#endif
+#ifdef "plus3"
+/16 "       Press any key to continue.#n"
+#endif
+#ifdef "esxdos"
+/16 "       Press any key to continue.#n"
+#endif
+#ifdef "next"
+/16 "       Press any key to continue.#n"
+#endif
+#ifdef "bit16"
+/16 "              Press any key to continue.#n"
+#endif
+/17 "" ; *You have taken
+/18 "" ; *\sturn
+/19 "" ; *s
+/20 "" ; *.[CR]
+/21 "" ; *You have scored
+/22 "" ; *%[CR]
+/23 "You're not wearing that.#n"
+/24 "You can't. You're wearing the _.#n"
+/25 "You already have the _.#n"
+/26 "You can't see that here.#n"
+/27 "You can't carry any more things.#n"
+/28 "You don't have that.#n"
+/29 "You're already wearing the _.#n"
+/30 "Y" ; One upper case character only. Initial of Yes
+/31 "N" ; One upper case character only. Inicial de No
+/32 "..."
+/33 "#n>"
+/34 "" ; *Spare
+/35 "#nTime passes...#n"
+/36 "You now have the _.#n"
+/37 "You're now wearing the _.#n"
+/38 "You have removed the _.#n"
+/39 "You have dropped the _.#n"
+/40 "You can't wear the _.#n"
+/41 "You can't remove the _.#n"
+/42 "You can't remove the _. Your hands are full.#n"
+/43 "You can't take the _ with you.#n"
+/44 "The _ is in the "
+/45 "The _ isn't in the "
+/46 ", "
+/47 " and "
+/48 ".#n"
+/49 "You don't have the _.#n"
+/50 "You're not wearing the _.#n"
+/51 ".#n"
+/52 "There isn't one of those in the "
+/53 "Nothing.#n"
+/54 "T" ; Letter for Tape
+/55 "D" ; Disk
+/56 "Unit not ready. Press a key to try again.#n"
+/57 "Input/output error.#n"
+/58 "Disk or directory might be full.#n"
+/59 "Invalid filename.#n"
+/60 "Filename:"
+/61 "Start the tape.#n"
+/62 "Tape or disk?"
+/63 "You take a closer look at the _ but notice nothing special.#n"
+/64 "Inside the _ you see:#n"
+;
+/MTX
+;
+; Game messages.
+;
+; Messages 0 to 13 are used by Triz2DAAD in its exits listing routine (process 10).
+;
+/0 "Visible exits: "
+/1 "none"
+/2 "north "
+/3 "south "
+/4 "east "
+/5 "west "
+/6 "northeast "
+/7 "northwest "
+/8 "southeast "
+/9 "southwest "
+/10 "up "
+/11 "down "
+/12 "in "
+/13 "out "
+;
+; Message 14 is Rabenstein's intro text
+;
+#ifndef "next"
+/14 "September 28th, 1862: It is a long and arduous ride back from Zurich, but meeting an experienced surgeon like Doctor Atten was an interesting exchange of views and an important addition to your own medical studies. You hope to cross the Rhine in a few days and stay a little in Strasbourg, a city so beautiful and melancholic in autumn.#n#nFor some time now you have been passing through the Black Forest and you should have reached the 'Tavern of the Sad Wanderer' hours ago. When the carriage suddenly stops in the middle of nowhere, you realise you've completely lost your way.#n#nWhile the coachman, obviously confused, checks his maps, you decide to stretch your legs a little, even though you're exhausted from the exertions of the journey. The light of the full moon hardly penetrates the treetops but you see enough to spot a little trail, which you decide to follow.#n#nAfter a short walk you reach a foggy clearing. The silence here is unusual; not even an animal can be heard. Even more unusual are the two figures moving slowly in your direction. As they come closer, you realise these men are wearing the armour of Roman legionaries. You wave to greet them, but the stare of their dead eyes passes through you. And before you have a moment to think about what you just have seen, the mysterious encounters disappear into the forest.#n#nThen you feel a sudden cold, reaching out, touching you with its fingers and surrounding you like an icy cloak. The temperature must have dropped rapidly by at least 10 degrees. As you exhale, a cloud of condensed air forms. It can't be. What's happening to you here?#n#nYou run back to the carriage, as fast as your legs carry you. Still gasping for air, you make a short approach to talk about the incident but then decide against it. The coachman would not believe you anyway. And so fate takes its course...#n"
+#endif
+#ifdef "next"
+/14 "September 28th, 1862: It is a long and arduous ride back from Zurich, but meeting an experienced surgeon like Doctor Atten was an interesting exchange of views and an important addition to your own medical studies. You hope to cross the Rhine in a few days and stay a little in Strasbourg, a city so beautiful and melancholic in autumn.#n#nFor some time now you have been passing through the Black Forest and you should have reached the 'Tavern of the Sad Wanderer' hours ago. When the carriage suddenly stops in the middle of nowhere, you realise you've completely lost your way.#n#nWhile the coachman, obviously confused, checks his maps, you decide to stretch your legs a little, even though you're exhausted from the exertions of the journey. The light of the full moon hardly penetrates the treetops but you see enough to spot a little trail, which you decide to follow.#n#nAfter a short walk you reach a foggy clearing. The silence here is unusual; not even an animal can be heard. Even more unusual are the two figures moving slowly in your direction.#n#nAs they come closer, you realise these men are wearing the armour of Roman legionaries. You wave to greet them, but the stare of their dead eyes passes through you. And before you have a moment to think about what you just have seen, the mysterious encounters disappear into the forest.#n#nThen you feel a sudden cold, reaching out, touching you with its fingers and surrounding you like an icy cloak. The temperature must have dropped rapidly by at least 10 degrees. As you exhale, a cloud of condensed air forms. It can't be. What's happening to you here?#n#nYou run back to the carriage, as fast as your legs carry you. Still gasping for air, you make a short approach to talk about the incident but then decide against it. The coachman would not believe you anyway. And so fate takes its course...#n"
+#endif
+;
+; Message 15 is used for printing the number of turns on the status line
+;
+/15
+"Turns: "
+;
+; After message 15, we use a variable amount of messages as location names at the status line.
+;
+/16 "Village"
+/17 "Churchyard"
+/18 "Church"
+/19 "Graveyard"
+/20 "Inn"
+/21 "Stable"
+/22 "Bedroom"
+/23 "Forsaken Path"
+/24 "Decayed Bedroom"
+/25 "Overgrown Village"
+/26 "Church Ruins"
+/27 "Old Graveyard"
+/28 "Mountain Trail"
+/29 "Hunting Lodge"
+/30 "Rabenstein Manor"
+/31 "Great Hall"
+/32 "Library"
+/33 "Undercroft"
+;
+; After location names messages, Rabensteind uses 2 messages for the help screen.
+;
+/34 "Surviving Rabenstein"
+/35 "Text adventures are text games based on exploring locations and manipulating objects next to the player character.#n#nActions are told to the computer using simple ACTION-OBJECT like sentences.#n#nMovements are done using cardinal points: GO NORTH, SOUTH, WEST or their abbreviations: N, S, E, W. Occasionally commands as UP or IN will also work.#n#nCommon actions with objects are SEARCH, USE or GET object, DROP, EXAMINE (its abbreviation X). INVENTORY (or I) lists carried items. LOOK (or L) redescribes the location.#n"
+;1
+; After help messages, Triz2DAAD uses one more message as status line text in dark locations.
+;
+/36 "Darkness"
+;
+/37 "There is no point in doing this again."
+/38 "The architecture is typical for the border area west of the Rhine, where German, Swiss and French influences blend."
+/39 "Truly impressive!"
+/40 "You feel you shouldn't wander off."
+/41 "There is no turning back now."
+#ifdef "plus3"
+/42 "Prologue"
+/43 "Epilogue"
+#endif
+#ifdef "esxdos"
+/42 "Prologue"
+/43 "Epilogue"
+#endif
+;
+/OTX
+;
+; Objects listing text.
+;
+/0 "a well"
+/1 "a locked stable door"
+/2 "an unlocked stable door"
+/3 "a well with a rope"
+/4 "a well with rope and bucket"
+/5 "a filled bottle"
+/6 "a doorbell"
+/7 "a closed church door"
+/8 "an open church door"
+/9 "the priest"
+/10 "a stoup"
+/11 "a rope"
+/12 "a cloaked figure"
+/13 "a torch"
+/14 "the innkeeper"
+/15 "an empty bottle"
+/16 "a group of villagers"
+/17 "the key to the stable"
+/18 "a warm fireplace"
+/19 "a bucket"
+/20 "a comfortable bed"
+/21 "a burning torch"
+/22 "a carriage"
+/23 "two horses"
+/24 "the coachman"
+/25 "some churned up ground"
+/26 "a crucifix necklace"
+/27 "a bloody scrap of cloth"
+/28 "a rotting sheet"
+/29 "a sheet tied to a bedpost"
+/30 "an old blanket"
+/31 "a musty bed"
+/32 "a stone monument"
+/33 "a shovel"
+/34 "a pile of ordinary soil"
+/35 "a hand full of holy soil"
+/36 "the grave of Father Johann"
+/37 "a coffin"
+/38 "some holy water"
+/39 "a skeleton"
+/40 "a mattress"
+/41 "a large window"
+/42 "a strange book"
+/43 "a secret passage downstairs"
+/44 "a window covered with a blanket"
+/45 "the vampire"
+/46 "the vampire screaming in pain"
+/47 "a stone coffin"
+/48 "a big heap of hay"
+/49 "several rows of church pews"
+/50 "a mausoleum"
+/51 "a shadow"
+/52 "scattered debris"
+/53 "some bookshelves"
+/54 "the graves of Rabenstein"
+;
+/LTX
+;
+; Locations text.
+;
+#ifdef "plus3"
+/0 "     #n#n#n#n#n#n#n     Programming & Story: Stefan Vogt#n    Testing: Graham Axten, Ant Stiller#n            and Chris Ainsley#n#n     Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+#ifdef "esxdos"
+/0 "     #n#n#n#n#n#n#n     Programming & Story: Stefan Vogt#n    Testing: Graham Axten, Ant Stiller#n            and Chris Ainsley#n#n     Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+#ifdef "next"
+/0 "     Programming & Story: Stefan Vogt#n    Testing: Graham Axten, Ant Stiller#n            and Chris Ainsley#n#n     Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+#ifdef "cpc"
+/0 "    Programming & Story: Stefan Vogt#n         Graphics: Dylan Barry#n   Testing: Graham Axten, Ant Stiller#n           and Chris Ainsley#n#n    Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+#ifdef "c64"
+/0 "    Programming & Story: Stefan Vogt#n   Testing: Graham Axten, Ant Stiller#n           and Chris Ainsley#n#n    Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+#ifdef "cp4"
+/0 "    Programming & Story: Stefan Vogt#n   Testing: Graham Axten, Ant Stiller#n           and Chris Ainsley#n#n    Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+#ifdef "bit16"
+/0 "           Programming & Story: Stefan Vogt#n  Testing: Graham Axten, Ant Stiller, Chris Ainsley#n#n           Copyright (C) 2020 Puddle Soft.#n#n"
+#endif
+/1 "The village is characterised by its picturesque centre, where beautiful half-timbered houses are illuminated by the moon and the leaded windows of the inn to the north reflect the glow of a cosy fire. To the east there is a stable and to the west you can see a church, southwards you may return to the forest."
+/2 "The old church is certainly one of the first buildings the settlers built in this region. The large, beautifully painted stained glass windows show various biblical scenes. The entrance door to the west is decorated with wonderful carvings. Further north the area merges into the graveyard and the centre of the village lies eastward."
+/3 "The inner sanctuary is functionally furnished. Church pews are arranged in a traditional cross shape. The golden altar gleams under the light of the chandeliers. On the back wall there is a large wooden cross. The only exit is to the east."
+/4 "The graveyard is a little remote and in the immediate vicinity of the forest. On a hill in the distance you can see an old manor. The graves look well kept. A little bit off the beaten track is a mausoleum. From here you can only go south."
+/5 "The large fireplace spreads a pleasant heat and brightens the room with warm colours. Comfortable seats invite you to linger. There is a beautifully decorated counter near the staircase to the upper floor and a door to the south leads outside."
+/6 "The stable is completely made of wood and offers enough space for several carriages. A small oil lamp on a post at the exit to the west provides some light. In one corner there is a big heap of hay."
+/7 "The room is dominated by a rustic country bed, located straight below a small window that allows a glimpse at the night sky. In one corner there is an old wardrobe. The floorboards creak with every step. A staircase leads down."
+/8 "You are standing on a path deep in the Black Forest, extending further north from here. On a night like this, the trees cast haunting shadows and people disappear without ever being seen again."
+/9 "The room has changed and it seems as if nobody has been here for decades. A musty smell is in the air, the furniture is rotting and mould is spreading on a wall. The stairs down have collapsed. The small window seems to be your only way out."
+/10 "The village seems deserted while the forest has reclaimed a large part of it. The thicket actually only allows you to go west towards the church."
+/11 "A tree fell into the church and caused it to collapse. Judging by the moss and the plants on the debris, this seems to have happened a long time ago. The ruin makes a desolate impression. North of here you can see the graveyard."
+/12 "You count considerably more graves than during your last visit, many overgrown with weeds and wild plants. The ruins of the church can be seen to the south, northwards an old road leads towards the forest."
+/13 "The old road probably leads further north to the manor. During daytime, when the sun kisses the treetops, the forest is less threatening. Westward, a little off the beaten track, you see a hunting lodge. To the south you can go back to the cursed village."
+/14 "A long time ago, this hunting lodge must have been abandoned abruptly. There is a thick layer of dust on the sparse furnishings. The door to the east leads back to the forest."
+/15 "What is it that hides behind these walls? The manor was once a splendid property but now all that remains here is death and decay. Go north to enter."
+/16 "The walls reflect the echo of your footsteps on the stone floor, breaking the ghostly silence that reigns here. Something lurks in the darkness. You feel it. A trail of blood leads to a room located westward. Go south to get out of here."
+/17 "Massive oaken bookshelves are lined up, filled with countless pieces of literature. An old fireplace still contains the remains of ashes. There is a smell of wood in the air. A door to the east leads back to the great hall."
+/18 "Vaulted places like this one are used for storage in buildings since early medieval times. The brick-lined walls are damp and covered with mould. In the middle of this desolate room, there is a coffin standing on an elevation that seems to consist of ground which is unusual for this part of the world. Stairs lead up to the library."
+/19 "A strange fog has spread all over the area. You can see the coachman near the old mausoleum, screaming and scared to death. He is being cruelly attacked by a cloaked figure who is biting his neck."
+/20 "Still moved by the events of the past days, you leave the old manor. As your gaze wanders towards an apple tree in the feral garden, you notice a ghostly figure. It is Father Johann who nods at you. You try to say something, but realise the apparition is already gone. In a better place you hope.#n#nSlowly you walk down the old path, which leads along wild blackberry bushes back towards Rabenstein. The glow of the golden autumn sun fills you with a pleasant warmth.#n#nFurther down, almost at the edge of the forest and where the old maple trees lay down their crimson red dress leaf by leaf, you linger for a moment and calmly breathe in fresh air. Sorrow fills your heart as you remember the many fates that were sealed here where death whispered their lullaby.#n#nNever will you forget the evil you saw, lurking in darkness and eternal night. Never shall chaos rise again and devour innocent souls. It's time for them to fear your name...#n#nAbraham van Helsing.#n#nThe End"
+#ifdef "plus3"
+/21 ""
+#endif
+#ifdef "esxdos"
+/21 ""
+#endif
+;
+/CON
+;
+; Location connections table
+;
+/0
+/1
+N 5
+E 6
+S 8
+W 2
+/2
+N 4
+W 3
+E 1
+/3
+E 2
+/4
+S 2
+/5
+S 1
+UP 7
+/6
+W 1
+/7
+DOWN 5
+/8
+N 1
+/9
+/10
+W 11
+/11
+E 10
+N 12
+/12
+S 11
+N 13
+/13
+S 12
+W 14
+/14
+E 13
+/15
+N 16
+/16
+S 15
+W 17
+/17
+E 16
+/18
+UP 17
+/19
+S 2
+/20
+#ifdef "plus3"
+/21
+#endif
+#ifdef "esxdos"
+/21
+#endif
+;
+/OBJ
+;
+; Objects definition table:
+; -Start location.
+; -Weight.
+; -Container - wearable atributes.
+; -16 user defined atributes.
+; -Noun and adjective.
+;
+/0           1 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  WELL _
+/1           1 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  DOOR _
+/2 NOTCREATED  20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  DOOR _
+/3 NOTCREATED  20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  WELL _
+/4 NOTCREATED  20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  WELL _
+/5 NOTCREATED  1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BOTTLE _
+/6 2           20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BELL _
+/7 2           20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  DOOR _
+/8 NOTCREATED  20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  DOOR _
+/9 3           20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  PRIEST _
+/10 3          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  STOUP _
+/11 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ROPE _
+/12 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  FIGURE _
+/13 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  TORCH _
+/14 5          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  INNKEEPER _
+/15 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BOTTLE _
+/16 5          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  VILLAGERS _
+/17 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  KEY _
+/18 5          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  FIREPLACE _
+/19 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BUCKET _
+/20 7          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BED _
+/21 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  TORCH _
+/22 8          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  CARRIAGE _
+/23 8          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  HORSES _
+/24 8          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  COACHMAN _
+/25 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  GROUND _
+/26 NOTCREATED 1  _ Y   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  CRUCIFIX _
+/27 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  CLOTH _
+/28 9          1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SHEET _
+/29 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SHEET _
+/30 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BLANKET _
+/31 9          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BED _
+/32 10         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  MONUMENT _
+/33 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SHOVEL _
+/34 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SOIL ORDINAR
+/35 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SOIL HOLY
+/36 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  GRAVE _
+/37 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  COFFIN _
+/38 NOTCREATED 1  _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  WATER HOLY
+/39 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SKELETON _
+/40 14         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  MATTRESS _
+/41 17         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  WINDOW _
+/42 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BOOK _
+/43 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  PASSAGE _
+/44 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  WINDOW _
+/45 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  VAMPIRE _
+/46 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  VAMPIRE _
+/47 18         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  COFFIN _
+/48 6          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  HAY _
+/49 3          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  PEWS _
+/50 4          20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  MAUSOLE _
+/51 NOTCREATED 20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  SHADOW _
+/52 11         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  DEBRIS _
+/53 17         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  BOOKS _
+/54 12         20 _ _   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  GRAVE _
+;
+/PRO 0
+
+; PRO 0 is the first process to be executed in DAAD.
+
+; If location is 0 (start of game)
+; calls initialization process (PRO 6).
+
+#ifdef "c64"
+>
+_       _       AT 0
+                XSPLITSCR 1
+#endif
+#ifdef "next"
+>
+_       _       AT 0
+                XNEXTSPEED 2
+#endif
+
+>
+_       _       AT 0
+                PROCESS 6
+
+; fire up the process handling graphics
+;
+#ifdef "c64"
+>
+_       _       PROCESS 13
+#endif
+#ifdef "cp4"
+>
+_       _       PROCESS 13
+#endif
+#ifdef "cpc"
+>
+_       _       PROCESS 13
+#endif
+#ifdef "next"
+>
+_       _       PROCESS 13
+#endif
+#ifdef "bit16"
+>
+_       _       PROCESS 13
+#endif
+
+; Sets text window position.
+
+>
+_       _       PROCESS 9
+
+; Sets flag DarkF acording to flag Dark and
+; the presence (or not) of light sources (default is object 0).
+; 
+
+>
+_       _       CLEAR DarkF
+                NOTZERO Dark
+                ABSENT 0
+                SET DarkF
+
+; Updates status line.
+
+>
+_       _       PROCESS 11
+
+; If there is a graphic at player's location
+; it loads it and, if it's not dark, draws it.
+
+#ifdef "bit16"
+>
+_       _       WINDOW  0
+                NOTAT 20
+;                PICTURE @Player
+                DISPLAY @DarkF
+
+> 
+_       _       WINDOW 0
+                AT 20
+                CLS
+#endif
+
+; It goes to the text window. If there is no light, prints system message 0
+; "It's too dark to see".
+
+>
+_       _       WINDOW 1
+                NOTZERO DarkF
+                SYSMESS 0
+
+; Otherwise, If there is light, prints current location description.
+
+>
+_       _       ZERO DarkF
+                DESC @Player
+
+; Calls process 3.
+
+>
+_       _       PROCESS 3
+
+; Calls process 1.
+
+>
+_       _       PROCESS 1
+
+;------------------------------------------------------------------------------
+/PRO 1
+
+; Called from PRO 0.
+
+; Calls PRO 4, former process 2 in PAWS.
+
+>
+_       _       PROCESS 4
+
+; Gets and analyzes, and colours player input prompt.
+#ifdef "c64"
+>
+_       _       INK 10 ;change prompt to red('ish)
+                PARSE 0
+                INK 1 ;revert to original text colour (white)
+                PROCESS 2
+                REDO
+#endif
+#ifdef "cp4"
+>
+_       _       INK 12 ;change prompt to medium gray
+                PARSE 0
+                INK 1 ;revert tor original text colour (white)
+                PROCESS 2
+                REDO
+#endif
+#ifdef "cpc"
+>
+_       _       INK 3 ;change prompt to dynamic colour 3
+                PARSE 0
+                INK 1 ;revert to original text colour (white)
+                PROCESS 2
+                REDO
+#endif
+#ifdef "plus3"
+>
+_       _       INK 5 ; change prompt to match the interface
+                PARSE 0
+                INK 1 ;revert to original text colour (white)
+                PROCESS 2
+                REDO
+#endif
+#ifdef "esxdos"
+>
+_       _       INK 5 ; change prompt to match the interface
+                PARSE 0
+                INK 1 ;revert to original text colour (white)
+                PROCESS 2
+                REDO
+#endif
+#ifdef "next"
+>
+_       _       INK 5 ; change prompt to match the interface
+                PARSE 0
+                INK 1 ;revert to original text colour (white)
+                PROCESS 2
+                REDO
+#endif
+#ifdef "amiga"
+>
+_       _       INK 3 ;change prompt to dynamic colour 3
+                PARSE 0
+                INK 2 ;revert to dynamic colour 2
+                PROCESS 2
+                REDO
+#endif
+#ifdef "st"
+>
+_       _       INK 3 ;change prompt to dynamic colour 3
+                PARSE 0
+                INK 2 ;revert to dynamic colour 2
+                PROCESS 2
+                REDO
+#endif
+#ifdef "pc"
+>
+_       _       INK 3 ;change prompt to dynamic colour 3
+                PARSE 0
+                INK 4 ; the DOS palette is off for whatever the reason is! 
+                PROCESS 2
+                REDO
+#endif
+
+#ifdef "bit8"
+>
+_       _       INK 1 ;revert to original text colour
+#endif
+
+#ifdef "amiga"
+>
+_       _       INK 2 ;revert to dynamic text colour
+#endif
+#ifdef "st"
+>
+_       _       INK 2 ;revert to dynamic text colour
+#endif
+#ifdef "pc"
+>
+_       _       INK 4 ; the DOS palette is off for whatever the reason is! 
+#endif
+
+; Turns counter entries.
+
+>
+_       _       EQ Turns 255
+                EQ 32 255
+                CLEAR Turns
+                CLEAR 32
+                SKIP 2
+
+>
+_       _       EQ Turns 255
+                PLUS 32 1
+                CLEAR Turns
+                SKIP 1
+
+>
+_       _       PLUS Turns 1
+
+; Updates (again) the status line.
+
+>
+_       _       PROCESS 11
+
+; Calls PRO 5. If it returns having executed an action
+; it continues the game loop re-starting PRO 1.
+
+>
+_       _       PROCESS 5
+                ISDONE
+                REDO
+
+; If not, it tries to move the player. If successful
+; it continues the game loop re-starting PRO 0.
+
+>
+_       _       MOVE Player
+                RESTART
+
+; If not, checks the verb in the LS (logic sentence). If it's a movement action
+; system message 7 ("you can't go that way") is printed and
+; game loop continues re-starting PRO 1.
+
+>
+_       _       NEWTEXT
+                LT Verb 14
+                SYSMESS 7
+                REDO
+
+; If it reaches here, system message 8 ("you can't do that") is displayed and
+; game loop continues re-starting PRO 1.
+
+>
+_       _       SYSMESS 8
+                REDO
+
+;------------------------------------------------------------------------------
+/PRO 2
+
+; Called from PRO 1.
+
+>
+_       _       HASAT TIMEOUT
+                SYSMESS 35
+                DONE
+
+>
+_       _       SYSMESS 6
+
+;------------------------------------------------------------------------------
+/PRO 3
+
+; PRO 3 is former "process 1" from PAWS.
+; It's called from PRO 0.
+; It executes right after location description.
+
+; Exits listing (if not dark).
+
+>
+_       _       NEWLINE
+                ZERO DarkF
+
+; Objects listing (if not dark).
+
+>
+_       _       NEWLINE
+                ZERO DarkF
+                LISTOBJ
+
+; trigger ending
+>
+_ _
+AT 20
+ANYKEY
+#ifndef "next"
+EXIT 0
+#endif
+#ifdef "next"
+XNEXTCLS
+XNEXTRST  ; Next cleanup and machine reset
+#endif
+
+#ifdef "plus3" 
+>
+_ _
+AT 21
+CLS
+MESSAGE 14
+ANYKEY
+GOTO 8
+RESTART
+#endif
+#ifdef "esxdos" 
+>
+_ _
+AT 21
+CLS
+MESSAGE 14
+ANYKEY
+GOTO 8
+RESTART
+#endif
+
+;------------------------------------------------------------------------------
+/PRO 4
+
+; PRO 4 is the former "status table" from Quill or "process 2" from PAWS.
+; It's called from PRO 1.
+; It executes right before the parser asks for a new order o logical sentence.
+
+/PRO 5
+
+; PRO 5 is the former "events table" from Quill or "Response table" from PAWS.
+; It\s called from PRO 1.
+
+; Entry added to display help screens.
+
+>
+HELP    _       PROCESS 7
+                WINDOW 2
+                CLS
+                MES 34
+                WINDOW 1
+                MESSAGE 35
+                ANYKEY
+                RESTART
+
+; environment examinations
+;
+> EX BLOOD
+PRESENT o_clothScrap
+MESSAGE "You hope it's not what you think it is."
+DONE
+
+> EX PATH
+AT 8
+MESSAGE "It looks like nobody's been here in a long time."
+DONE
+
+> EX FOREST
+AT 8
+MESSAGE "Hundreds of myths and stories are told about the Black Forest, and there is probably a little truth in each one."
+DONE
+
+> EX TREES
+AT 8 
+MESSAGE "Hundreds of myths and stories are told about the Black Forest, and there is probably a little truth in each one."
+DONE
+
+> EX SHADOW
+AT 8
+MESSAGE "Whatever may be hiding there, you hope it stays in the dark."
+DONE
+
+> EX STABLE
+AT 1
+MESSAGE m_architecture
+DONE
+
+> EX HOUSES
+> EX VILLAGE
+AT 1
+MESSAGE m_architecture
+DONE
+
+> EX MOON
+AT 1
+MESSAGE "It's a full moon. Not a good omen."
+DONE
+
+> EX WINDOW
+AT 1 
+MESSAGE "The Inn seems to be opened."
+DONE
+
+> EX WINDOW
+AT 2
+MESSAGE "The most beautiful motif, in your opinion, shows a shepherd with a halo who guides his sheep safely home. It has a deep symbolism."
+DONE
+
+>EX CARVI
+AT 2
+MESSAGE "It must have taken months to carve these into the wood of this massive door."
+DONE
+
+> EX CHURCH
+AT 2
+MESSAGE m_impressive
+DONE
+
+> EX DOOR
+AT 2
+MESSAGE "There is no lock visible from the outside."
+DONE
+
+> EX CHAND
+AT 3
+MESSAGE "They look as if they were made of silver. The patina tells you that they are very old."
+DONE
+
+> EX ALTAR
+AT 3
+MESSAGE "There's a latin inscription: 'Pulvis et umbra sumus'."
+DONE
+
+> EX CROSS
+AT 3
+MESSAGE "It is decorated with wonderful carvings. Judging by the look of the wood, it is quite old, possibly older than the church."
+DONE
+
+> EX FOREST
+AT 4
+MESSAGE "Again, you feel like you're being watched. Is someone hiding in the darkness?"
+DONE
+
+> EX MANOR
+AT 4
+MESSAGE "This must have been a splendid place once. It makes a deserted impression on you."
+DONE
+
+> EX GRAVES
+AT 4
+MESSAGE "It looks like nobody's been buried here in eighty years? How could that be?"
+DONE
+
+> EX SEATS
+AT 5
+MESSAGE "Artfully crafted. Typical for this region."
+DONE
+
+> EX COUNT
+AT 5
+MESSAGE "A picture was painted on the front. You recognise a river course with vines on both sides. The river seems smaller than the Rhine, so you assume that it is the Moselle."
+DONE
+
+>EX STAIR
+AT 5
+MESSAGE "If you go up there, you will certainly find the guest rooms."
+DONE
+
+> EX LAMP
+AT 6
+MESSAGE "It is nailed to the post."
+DONE
+
+> EX WINDOW
+AT 7
+MESSAGE "In awe, you gaze at the many stars in the firmament."
+DONE
+
+> EX WARDROB
+> OPEN WARDROB
+AT 7
+MESSAGE "Empty."
+DONE
+
+> EX WINDOW
+AT 9
+MESSAGE "This is your way out. Daylight comes in and illuminates this musty place."
+DONE
+
+> EX SMELL
+AT 9
+MESSAGE "Disgusting."
+DONE
+
+> EX FURNI
+AT 9
+MESSAGE "Yikes."
+DONE
+
+> EX STAIR
+AT 9
+MESSAGE "No chance using it to get down."
+DONE
+
+> EX VILLAGE
+AT 10
+MESSAGE "It looks very different from last night. The village is derelict and abandoned."
+DONE
+
+> EX FOREST
+AT 10
+MESSAGE "This must have taken decades to grow."
+DONE
+
+> EX TREE
+AT 11
+MESSAGE "This was certainly one of the oldest and largest trees here. It is incredibly massive."
+DONE
+
+> EX Church
+AT 11
+MESSAGE "What a sad sight to see the once proud building like this."
+DONE
+
+> EX RUINS
+AT 11
+MESSAGE "What a sad sight to see the once proud building like this."
+DONE
+
+> EX PLANT
+AT 11
+MESSAGE "As much as you would like to take a closer look, now is not the right time for botanical excursions."
+DONE
+
+> EX PLANT
+AT 12
+MESSAGE "As much as you would like to take a closer look, now is not the right time for botanical excursions."
+DONE
+
+> EX GRAVES
+AT 12
+MESSAGE "An entire village buried, lonely and forgotten in the forest."
+DONE
+
+> EX MANOR
+AT 13
+MESSAGE "You can't see it from here."
+DONE
+
+> EX FURNISH
+AT 14
+MESSAGE "Nothing of interest."
+DONE
+
+> EX BLOOD
+AT 16
+MESSAGE "Is that human blood on the ground there?"
+DONE
+
+> EX SHELVES
+AT 17
+MESSAGE "What a remarkable collection. Some of the works seem to date back to the 15th century."
+DONE
+
+> EX FIREPLA
+AT 17
+MESSAGE "We'll all turn to ashes one day."
+DONE
+
+> EX FOG
+AT 19
+MESSAGE "This isn't a normal fog!"
+DONE
+
+> EX MAUSOLE
+AT 4
+EQ pickedUpTorch YES
+MESSAGE "It looks very old and is almost completely overgrown with tendrils."
+DONE
+
+> EX MAUSOLE
+AT 4
+EQ pickedUpTorch NO
+MESSAGE "It looks very old and is almost completely overgrown with tendrils. From this angle you can see a small shadow behind it."
+CREATE o_shadow
+DONE
+
+> SEARCH SHADOW
+> EX SHADOW
+AT 4
+EQ pickedUpTorch NO
+PRESENT o_shadow
+MESSAGE "It's a torch holder with a torch in it."
+CREATE o_torch
+SET pickedUpTorch
+DONE
+
+> EX SHADOW
+AT 4
+EQ pickedUpTorch YES
+MESSAGE "It's a torch holder."
+DONE
+
+> EX PEWS
+EQ discoveredRope NO
+AT 3 
+MES "At first sight it is difficult to estimate if there is anything useful here, as the pews certainly take up two thirds of the area. "
+
+> EX PEWS
+AT 3
+MESSAGE "They seem to be made of solid beech, a native tree here in the Black Forest."
+DONE
+
+> EX HAY 
+EQ searchedHay NO
+MES "You could hide pretty much anything in such a massive heap of hay. "
+
+> EX HAY
+AT 6
+MESSAGE "Made from pasture grass, it has a wonderful, intense smell."
+DONE
+
+; object examinations
+
+> EX COACHMA
+PRESENT o_coachman
+MESSAGE "He tries to hide it but he is not in a good mood."
+DONE
+
+> EX COFFIN
+AT 12
+MESSAGE "Just a simple wooden coffin. You can see that it was buried here for a long time."
+DONE
+
+> EX COFFIN
+AT 18
+MESSAGE "It is made of stone and appears much older than the rest of the manor, almost like an antique sarcophagus. The frescoes on it seem like an early form of Christian art. It looks like the engraved cross on the lid has been deliberately damaged."
+DONE
+
+> EX GROUND
+AT 18
+MESSAGE "It is very sandy and looks exotic to you. The ground could come from the Orient. Must this horrible creature possibly dwell on it in order to survive?"
+DONE
+
+> EX WELL
+AT 1
+MESSAGE "It's just an ordinary well."
+DONE
+
+> EX BOTTLE
+PRESENT o_bottleFreshWater
+MESSAGE "It contains water from the well."
+DONE
+
+> EX BELL
+PRESENT o_bell
+MESSAGE "It seems to be made of copper, solid handicraft."
+DONE
+
+> EX PRIEST
+PRESENT o_priest
+MESSAGE "Looks like you have his full attention. He's wearing an old-fashioned cassock and a clerical collar. Very unusual how time seems to have stood still in this village."
+DONE
+
+> EX STOUP
+PRESENT o_stoup
+MESSAGE "The stoup is located near the entrance of the church, so one can make the sign of the cross when entering. It is a vessel containing holy water. The use of holy water as a sacramental for protection against evil dates back to the early days of Christianity."
+DONE
+
+> EX FIGURE
+PRESENT o_cloakedFigure
+MESSAGE "No human being moves like that."
+DONE
+
+> EX INNKEEP
+PRESENT o_innkeeper
+MESSAGE "She looks a bit old-fashioned but she is a true beauty."
+DONE
+
+> EX VILLAGERS
+PRESENT o_villagers
+MESSAGE "They are having a lively discussion."
+DONE
+
+> EX FIREPLA
+PRESENT o_fireplace
+MESSAGE "The fire burns and crackles."
+DONE
+
+> EX GROUND
+PRESENT o_forestGround
+ABSENT o_torchBurning
+MESSAGE "Where did the coachman go? You need light to search this and investigate properly."
+DONE
+
+> EX GROUND
+PRESENT o_forestGround
+PRESENT o_torchBurning
+MESSAGE "Now that you have light, you should search for evidence."
+DONE
+
+> EX CARRIAGE
+PRESENT o_carriage
+MESSAGE "Not the best carriage, but it brought you here."
+DONE
+
+> EX HORSES
+PRESENT o_horses
+MESSAGE "These beautiful animals need a rest."
+DONE
+
+> EX CLOTH
+PRESENT o_clothScrap
+MESSAGE "It looks like a scrap from the coachman's jacket, and there is blood on it!"
+DONE
+
+> EX SHEET
+AT 9
+MESSAGE "That's so disgusting!"
+DONE
+
+> EX BLANKET
+PRESENT o_blanket
+MESSAGE "It's a big, old blanket and it's still in fairly good condition." 
+DONE
+
+> EX BED
+PRESENT o_bedMusty
+MESSAGE "This bed has clearly seen better days."
+DONE
+
+> EX FLOOR
+AT 7
+MESSAGE "Old buildings... nothing unusual though."
+DONE
+
+> EX BED
+PRESENT o_bed
+MESSAGE "It looks very comfortable!"
+DONE
+
+> EX MONUMEN
+PRESENT o_monument
+MESSAGE "There is an inscription carved into the stone: 'In memory of all the innocents who were murdered that terrible night, the year of the Lord 1798.' You feel dizzy as you begin to realise. Did you see ghosts? Is Rabenstein an echo of death, a reflection of cursed souls that are doomed to remain on this world?#n#nThe cloaked figure was real, though. Did it kill all these people? Whatever it takes, you must stop the creature. Then you remember what the priest said: 'You need to find me tomorrow...'"
+DONE
+
+> EX DEBRIS
+AT 11
+MESSAGE "The debris extends over the entire area of the church ruins. The tree has caused tremendous damage, obviously a long time ago."
+DONE
+
+> EX SOIL
+PRESENT o_soilPile
+MESSAGE "Just a pile of ordinary soil from the excavation of Father Johann's grave. A little bit of holy soil would be much more helpful now."
+DONE
+
+> EX SOIL
+PRESENT o_soilHoly
+MESSAGE "This soil is blessed."
+DONE
+
+> EX WATER
+PRESENT o_bottleHolyWater
+MESSAGE "It's definitely the bottle from the night of your arrival in Rabenstein. It looks aged but there is still the same reasonable amount of holy water in it."
+DONE
+
+> EX SKELETO
+PRESENT o_skeleton
+MESSAGE "It is wearing the same clothes as the priest last night."
+DONE
+
+> EX MATTRESS
+PRESENT o_mattress
+MESSAGE "Not very comfortable but it'll do."
+DONE
+
+> EX CRUCIFI
+PRESENT o_crucifix
+MESSAGE "It's made of wood. A fine hand-carved piece."
+DONE
+
+> EX WINDOW
+PRESENT o_window
+MESSAGE "You look out over a feral garden and the rising morning sun."
+DONE
+
+> EX BOOK
+PRESENT o_book
+MESSAGE "The title is: 'All Secrets Known' by Jerry Cantrell."
+DONE
+
+> EX BLANKET
+> EX WINDOW
+PRESENT o_windowCovered
+MESSAGE "The light can barely penetrate now." 
+DONE
+
+> EX VAMPIRE
+PRESENT o_vampireCount
+MESSAGE "He encircles you like a predator his prey."
+DONE
+
+> EX VAMPIRE
+PRESENT o_vampireInPain
+MESSAGE "Full of pain, the creature screams and lashes out."
+DONE
+
+> EX COACHMA
+AT 19
+MESSAGE "This likely won't end well for him."
+DONE
+
+> EX MAUSOLE
+AT 19
+MESSAGE "The mausoleum doesn't matter now. Do something!"
+DONE
+
+>
+EXAMI   _       WHATO
+                NOTEQ 51 255 ; triz2daad bugfix
+                PRESENT @51
+                SYSMESS 63
+                DONE
+
+>
+EXAMI   _       NOTDONE
+
+>
+EXITS   _       PROCESS 10
+                DONE
+
+> GET ROPE
+PRESENT o_wellWithRope
+MESSAGE "The well is repaired now, so you will leave this where it is."
+DONE
+
+> GET ROPE
+PRESENT o_wellWithRopeBucket
+MESSAGE "The well is repaired now, so you will leave this where it is."
+DONE
+
+> GET BUCKET
+PRESENT o_wellWithRopeBucket
+MESSAGE "The well is repaired now, so you will leave this where it is."
+DONE
+
+> GET BLANKET
+PRESENT o_windowCovered
+PRESENT o_vampireInPain
+MESSAGE "You have to pull the blanket in order to survive this."
+DONE
+
+> GET BLANKET
+PRESENT o_windowCovered
+PRESENT o_vampireCount
+MESSAGE "The vampire is incredibly fast, so you should distract him first before you pull the blanket."
+DONE
+
+> GET BLANKET
+PRESENT o_windowCovered
+ABSENT o_vampireCount
+MESSAGE "It was a good idea to darken this room. For now, the blanket should be covering the window, at least until you have lured the creature here."
+DONE
+
+> GET GROUND
+AT 18
+MESSAGE "Instead of taking, you should add something to it."
+DONE
+
+> GET LAMP
+AT 6
+MESSAGE "The lamp is fixed with thick nails. You can't loosen it with your bare hands."
+DONE
+
+> GET SHEET
+PRESENT o_sheetTiedToBed
+MESSAGE "It helps you getting out here, so you leave it where it is."
+DONE
+
+> GET HORSES
+> USE HORSES
+PRESENT o_horses
+EQ talkedToInnkeeper NO
+MESSAGE "You shouldn't strain the horses unnecessarily and find shelter."
+DONE
+
+> GET HORSES
+> USE HORSES
+PRESENT o_horses
+EQ talkedToInnkeeper YES
+ISAT o_stableDoorLocked 1
+MESSAGE "You should have a look at the stable first to make sure everything's all right."
+DONE
+
+> GET HORSES
+> USE HORSES
+AT 6
+PRESENT o_horses
+MESSAGE "No, they really need a rest."
+DONE
+
+> GET HORSES
+> USE HORSES
+PRESENT o_horses
+EQ talkedToInnkeeper YES
+ISAT o_stableDoorUnlocked 1
+MESSAGE "You lead the horses gently into the stable. It is imperative that the poor animals recover so that you do not stay here any longer than necessary. Several times you look behind you on your way out of the forest back to Rabenstein. You cannot get rid of the feeling that someone or something is watching you. If you only knew what happened to the coachman. He would never leave. Once you're back in the village, you should ask if someone has seen him.#n"
+ANYKEY
+GOTO 6
+PLACE o_horses 6
+PLACE o_carriage 6
+RESTART
+
+>
+GET     _       NOTEQ Noun2 255
+                SYNONYM EXTRACT _
+                
+>
+I       _       SYSMESS 9
+                LISTAT CARRIED
+                SYSMESS 10
+                LISTAT WORN
+                DONE
+
+>
+GET     ALL     DOALL HERE
+>
+GET     _       AUTOG
+                DONE
+
+>
+DROP    ALL     DOALL CARRIED
+>
+DROP    _       AUTOD
+                DONE
+
+>
+REMOVE  ALL     DOALL WORN
+>
+REMOVE  _       AUTOR
+                DONE
+
+>
+WEAR    ALL     DOALL CARRIED
+>
+WEAR    _       AUTOW
+                DONE
+
+>
+R       _       EQ 34 255
+                RESTART
+
+>
+R       _       LET 33 30
+                REDO
+
+#ifndef "next"
+>
+QUIT    _       END
+                QUIT
+#endif
+#ifdef "next"
+>
+QUIT    _       PROCESS 14
+#endif
+
+>
+QUIT    _       DONE
+
+>
+SAVE    _       XSAVE 0
+                RESTART
+
+>
+LOAD    _       XLOAD 0
+                SET refreshMaluva ; make sure the picture is loaded
+                RESTART
+
+>
+RAMSA   _       RAMSAVE
+                SET refreshMaluva ; make sure the start picture is loaded
+                RESTART
+
+>
+RAMLO   _       RAMLOAD 255
+                SET refreshMaluva ; make sure the start picture is loaded
+                RESTART
+
+>
+LOOK    _       RESTART
+
+> VERSION _
+MESSAGE "Release 11 Serial no. 200329#n#nInterpreter: DAAD v2, Copyright (c) 1988-1991 Infinite Imaginations & Aventuras AD.#n#nGraphics library: Maluva by Uto."
+DONE
+
+> PUDDLE _
+MESSAGE "This spooky excursion is brought to you by: Stefan Voorhees, Antheads Stiller, Graham Axemurder and Dylan Burythedead.#n#nAdvanced guides for summoning demons and DIY exorcisms are available at http://puddlesoft.net"
+DONE
+
+> TALK PRIEST
+AT 3 
+ABSENT o_priest
+MESSAGE "He isn't here at the moment."
+DONE
+
+> TALK COACHMA
+PRESENT o_coachman
+MESSAGE "He looks worried. 'The road seems to lead to a village, even though I don't see it on our maps. Anyway, we must find a place to stay for the night. The horses need a rest. Will you go there while I watch the carriage? And please be careful. I don't care much about old wives' tales but the locals avoid this area. They say it's haunted.'"
+DONE
+
+> E _
+AT 1
+PRESENT o_stableDoorLocked
+MESSAGE "The door to the stable is locked. You'll need the key to open it."
+DONE
+
+> TALK INNKEEP
+PRESENT o_innkeeper
+ISAT o_coachman 8
+MESSAGE "The innkeeper greets you. 'Welcome to Rabenstein. Yes, we have a bed for you tonight.' she says. 'Put your horses in our stable and don't let your friend wait for too long out in the cold.' She smiles at you and places a key on the counter."
+DESTROY o_coachman
+CREATE o_stableKey
+PLACE o_forestGround 8
+SET talkedToInnkeeper
+DONE
+
+> USE KEY
+> UNLOCK _
+PRESENT o_stableDoorLocked
+PRESENT o_stableKey
+SWAP o_stableDoorLocked o_stableDoorUnlocked
+OK
+
+> OPEN DOOR
+PRESENT o_stableDoorLocked
+ABSENT o_stableKey
+MESSAGE "Yes. But don't you think you should first find the key?"
+DONE 
+
+> USE KEY
+> LOCK _
+PRESENT o_stableKey
+PRESENT o_stableDoorUnlocked
+MESSAGE "No need to lock it again. Nobody steals tired horses anyway."
+DONE
+
+> TALK INNKEEPER
+PRESENT o_innkeeper
+ISAT o_horses 6
+MESSAGE "You ask her about the coachman. 'No, you're the only stranger who's been here tonight.' she says. 'Maybe someone else saw him. He can't just disappear, right?'"
+DONE
+
+> TALK INNKEEPER
+PRESENT o_innkeeper
+EQ talkedToInnkeeper YES
+ISNOTAT o_horses 6
+MESSAGE "'Shoo! It's a cold, dark night!' she says."
+DONE
+
+> TALK VILLAGERS
+PRESENT o_villagers
+ISNOTAT o_horses 6
+MESSAGE "There's nothing like a drink and a good story. But at the moment you have other priorities. Later, however, a conversation with the villagers could be very useful."
+DONE
+
+> TALK VILLAGERS
+PRESENT o_villagers
+ISAT o_horses 6
+ISNOTAT o_stableKey NOTCREATED
+MESSAGE "'Hey!' The innkeeper fixes her eyes on you. 'I think you still have something that belongs to me?'"
+DONE
+
+> GIVE KEY
+PRESENT o_innkeeper
+ISAT o_horses 6
+PRESENT o_stableKey
+MESSAGE "You return the stable key. The innkeeper takes it and puts it away."
+DESTROY o_stableKey
+DONE
+
+> TALK VILLAGERS
+PRESENT o_villagers
+ISAT o_horses 6
+ISAT o_stableKey NOTCREATED
+EQ talkedToVillagers NO
+MESSAGE "You sit down for a while. The villagers tell you the tale of an unholy being, thirsty for the blood of innocents. This is one of the usual haunted stories you've heard many times before. The innkeeper points to the empty bottle on the table and asks if she should bring another one, which you decline. It is getting late and you begin to worry that something might have happened to the coachman. None of these people seem to have seen him.#n#nJust as you are about to leave, you hear the church bell ringing from afar..."
+CREATE o_emptyBottle
+SET talkedToVillagers
+DONE
+
+> TALK VILLAGERS
+PRESENT o_villagers
+EQ talkedToVillagers YES
+MESSAGE "That's enough scary stories for tonight so you decide not to have another conversation."
+DONE
+
+> W _
+AT 2
+PRESENT o_churchDoorClosed
+MESSAGE "The church seems to be locked."
+DONE
+
+> RING BELL
+PRESENT o_bell
+PRESENT o_churchDoorClosed
+EQ talkedToVillagers YES
+MESSAGE "You hear someone unlock the church door from the inside."
+SWAP o_churchDoorClosed o_churchDoorOpen
+DONE
+
+> RING BELL
+PRESENT o_bell
+MESSAGE "You ring the bell but nothing happens."
+
+> USE STOUP
+AT 3
+MESSAGE "You dip your fingertips in the holy water and make the sign of the cross."
+SET usedStoup
+DONE
+
+> USE PEWS
+AT 3
+MESSAGE "They make a rather uncomfortable impression on you, probably because they are not upholstered. It is not the right time for testing church furniture anyway."
+DONE
+
+> PRAY _
+AT 3
+EQ usedStoup NO
+MESSAGE "You feel like there is something else you should do here first."
+DONE
+
+> PRAY _
+AT 3
+EQ usedStoup YES
+EQ prayedToGod NO
+MESSAGE "You kneel down and pray to God. It's been a long time since you last did this, but you feel it's the right thing to do. Something is wrong here and unusual circumstances require unusual allies. Somehow you feel relieved. It's like you're not alone in this anymore."
+SET prayedToGod
+DONE
+
+> PRAY _
+AT 3
+EQ prayedToGod YES
+MESSAGE "Another conversation is not necessary from your point of view. You've said everything you wanted to say."
+DONE
+
+> TALK GOD
+AT 3
+EQ prayedToGod NO
+MESSAGE "It would be nice if one could have a conversation with God in this way, but in a church there is certainly a far more formal dialogue expected."
+DONE
+
+> TALK GOD
+AT 3
+EQ prayedToGod YES
+MESSAGE "Another conversation is not necessary from your point of view. You've said everything you wanted to say."
+DONE
+
+> TALK PRIEST
+PRESENT o_priest
+EQ prayedToGod NO
+MESSAGE "'Good evening, my son. I think I know what brings you here on this gloomy, cold autumn night. The Lord is your shepherd and he has been awaiting you, so speak to him now.' The priest folds his hands and looks at you expectantly."
+DONE
+
+> TALK PRIEST
+PRESENT o_priest
+EQ prayedToGod YES
+EQ priestWantsWater NO
+ISNOTAT o_cloakedFigure 19
+MESSAGE "He puts his hand on your shoulder. 'These are dark times. The Lord blesses you. Please come back here if you need his help.'"
+DONE
+
+> USE TORCH
+> USE FIREPLACE
+PRESENT o_torch
+PRESENT o_fireplace
+SWAP o_torch o_torchBurning
+MESSAGE "You hold the torch in the fire and it starts to burn."
+DONE
+
+> USE TORCH
+PRESENT o_torch
+PRESENT o_forestGround
+MESSAGE "The torch doesn't burn, so it won't help you much."
+DONE
+
+> SEARCH GROUND
+> USE TORCH
+PRESENT o_torchBurning
+PRESENT o_forestGround
+DESTROY o_forestGround
+CREATE o_crucifix
+CREATE o_clothScrap
+MESSAGE "The torch lights the ground. You see a crucifix and a scrap of cloth."
+DONE
+
+> GIVE CLOTH
+PRESENT o_priest
+EQ prayedToGod YES
+PRESENT o_clothScrap
+SET priestWantsWater
+DESTROY o_clothScrap
+MESSAGE "'You found a bloody scrap of cloth at the place where your friend vanished? That is indeed a problem. You need to know that something very old and evil is hiding in this remote part of the Black Forest. Since the time when the ancient Romans ruled this land, people have disappeared here without a trace. I am bound to this church. You won't understand now, but you will understand tomorrow if you manage to make it through the night. We need to put an end to this. Can you get me some water? Oh, and please be careful out there.'#n#nHis words send a cold shiver down your spine. Water he says? Wasn't there a well somewhere?"
+DONE
+
+> TALK PRIEST
+PRESENT o_priest
+EQ priestWantsWater YES
+MESSAGE "'Did you bring me the water that I asked for, my son?' He's reaching out his hands, suggesting that you give him something."
+DONE
+
+> SEARCH PEWS
+AT 3 
+EQ discoveredRope NO
+CREATE o_rope
+MESSAGE "You examine each row carefully. At a pew near the altar you discover a rope which hangs coiled up on a small coat hook."
+SET discoveredRope
+DONE
+
+> SEARCH PEWS
+AT 3 
+EQ discoveredRope YES
+MESSAGE m_noPointDoing
+DONE
+
+> SEARCH HAY
+AT 6
+EQ searchedHay NO
+CREATE o_bucket
+MESSAGE "You reach into the hay and start searching. After a short while your hand grabs a solid object. As you pull it out you recognise it's a bucket, something you actually would expect to find in a stable."
+SET searchedHay
+DONE
+
+> SEARCH HAY
+AT 6
+EQ searchedHay YES
+MESSAGE m_noPointDoing
+DONE
+
+> ENTER WELL
+AT 1
+MESSAGE "No way, why would you want to go down there?"
+DONE
+
+> USE WELL
+PRESENT o_well
+MESSAGE "You're wondering how you could get water out of the well."
+DONE
+
+> USE WELL
+PRESENT o_wellWithRope
+MESSAGE "Not really usable yet. You can't just climb down the shaft, right?"
+DONE
+
+> USE ROPE
+PRESENT o_well
+PRESENT o_rope
+SWAP o_well o_wellWithRope
+DESTROY o_rope
+MESSAGE "You attach the rope to a wooden bench directly above the well."
+DONE
+
+> USE BUCKET 
+PRESENT o_well
+PRESENT o_bucket
+MESSAGE "Good idea, but something is missing here."
+DONE
+
+> USE BUCKET
+PRESENT o_wellWithRope
+PRESENT o_bucket
+SWAP o_wellWithRope o_wellWithRopeBucket
+DESTROY o_bucket
+MESSAGE "You attach the bucket to the rope and pull up a fresh charge of water."
+DONE
+
+> USE WELL
+PRESENT o_wellWithRopeBucket
+MESSAGE "There already is water in the bucket. You need something to carry it away."
+DONE
+
+> USE BOTTLE
+PRESENT o_wellWithRopeBucket
+PRESENT o_emptyBottle
+SWAP o_emptyBottle o_bottleFreshWater
+MESSAGE "You fill the bottle with fresh water."
+DONE
+
+> GIVE BOTTLE
+EQ priestWantsWater YES
+PRESENT o_priest
+PRESENT o_bottleFreshWater
+DESTROY o_bottleFreshWater
+LET priestWantsWater NO
+PLACE o_cloakedFigure 19
+MESSAGE "The priest consecrates the water. 'I'll keep this for you. You need to find me tomorrow but...' He tries to tell you something but suddenly a cruel scream is heard from the graveyard. Does this horror ever end?"
+DONE
+
+> TALK PRIEST
+PRESENT o_priest
+ISAT o_cloakedFigure 19
+MESSAGE "There is no time now, hurry!"
+DONE
+
+> E _
+AT 3
+ISAT o_cloakedFigure 19
+DESTROY o_priest
+GOTO 2
+RESTART
+
+> N _
+AT 2
+ISAT o_cloakedFigure 19
+GOTO 19
+RESTART
+
+> USE TORCH
+PRESENT o_torchBurning
+PRESENT o_cloakedFigure
+MESSAGE "You throw the torch at the figure and his cloak catches fire. As the attacker turns, you look into the demonically distorted face of a vampire. You've heard tales about these creatures, lurking in the darkness, turned away from God, dishonouring his creation. He hisses at you, then speaks in a guttural voice: 'You will regret this. Your soul is mine like all the others!' His red eyes follow you very closely. Which fallen angel might he be?#n#n'Tell me your name!' you scream at him. He laughs. 'Many names have been given to me in the thousands of years I walk the earth. Let me tell you something else. You are worthless and you will turn into nothing when I drain the life from your dying body.'#n#nHe becomes one with the fog and disappears into the darkness. The coachman, still panicked, flees to the woods. This night needs to come to an end...#n"
+DESTROY o_torchBurning
+DESTROY o_cloakedFigure
+DESTROY o_innkeeper
+DESTROY o_villagers
+ANYKEY
+GOTO 4
+RESTART
+
+> USE BED
+> SLEEP _
+PRESENT o_bed
+ISAT o_innkeeper 5
+MESSAGE "As much as you'd like to, this isn't the time for a nap."
+DONE
+
+> USE BED
+> SLEEP _
+PRESENT o_bed
+ISNOTAT o_innkeeper 5
+NOTWORN o_crucifix
+MESSAGE "You don't feel safe enough to sleep. You need something that protects you."
+DONE
+
+> USE BED
+> SLEEP _
+PRESENT o_bed
+ISNOTAT o_innkeeper 5
+WORN o_crucifix
+MESSAGE "The crucifix hopefully will keep you from harm. You close your eyes and fall asleep instantly.#n"
+ANYKEY
+GOTO 9
+RESTART
+
+> USE WINDOW
+> OPEN WINDOW
+AT 9
+MESSAGE "The window is not the problem here, it's the height. Make sure you get down without breaking your legs."
+DONE
+
+> USE SHEET
+PRESENT o_bedMusty
+PRESENT o_sheetRotting
+CREATE o_sheetTiedToBed
+DESTROY o_sheetRotting
+MESSAGE "You tie the sheet to a bedpost."
+DONE
+
+> USE SHEET
+PRESENT o_sheetTiedToBed
+MESSAGE "Damn, still not enough to rappel down."
+DONE
+
+> SEARCH BED
+AT 9
+ISAT o_blanket NOTCREATED
+CREATE o_blanket
+MESSAGE "There is an old blanket underneath the bed."
+DONE
+
+> USE BLANKET
+AT 9 
+ABSENT o_sheetTiedToBed
+PRESENT o_blanket
+MESSAGE "This blanket could be useful again so this should be the lower end."
+DONE
+
+> USE BLANKET
+PRESENT o_sheetTiedToBed
+PRESENT o_blanket
+MESSAGE "You climb through the window and rappel down carefully. About two metres from the ground the rotting sheet tears and you crash down, still holding the old blanket.#n"
+PLACE o_blanket 10
+ANYKEY
+GOTO 10 
+RESTART
+
+> SEARCH DEBRIS
+AT 11
+EQ searchedDebris NO
+CREATE o_shovel
+SET searchedDebris
+MESSAGE "You take some time to search the remains. Behind a broom bush near the church wall you recognise a metal object. As you get closer, you realise that it is a shovel, lonely and abandoned like the rest of the village."
+DONE
+
+> SEARCH DEBRIS
+AT 11
+EQ searchedDebris YES
+MESSAGE m_noPointDoing
+DONE
+
+> SEARCH GRAVES
+AT 12
+EQ searchedGraves YES
+MESSAGE m_noPointDoing
+DONE
+
+> SEARCH GRAVES
+AT 12
+EQ searchedGraves NO
+CREATE o_graveOfJohann
+MESSAGE "For some reason, you are drawn to a certain grave which is supposed to contain the remains of a Father Johann."
+SET searchedGraves
+DONE
+
+> DIG _
+AT 12
+ABSENT o_graveOfJohann
+ABSENT o_shovel
+MESSAGE "Yes, but not with your bare hands. There surely is equipment somewhere."
+DONE
+
+> DIG _
+PRESENT o_graveOfJohann
+ABSENT o_shovel
+MESSAGE "You found the spot. Now you need equipment."
+DONE
+
+> USE SHOVEL
+> DIG _
+ABSENT o_graveOfJohann
+PRESENT o_shovel
+MESSAGE "Dig what? You need a spot."
+DONE
+
+> USE SHOVEL
+> DIG _
+PRESENT o_graveOfJohann
+PRESENT o_coffinJohann
+MESSAGE m_noPointDoing
+DONE
+
+> USE SHOVEL
+> DIG _
+PRESENT o_graveOfJohann
+PRESENT o_shovel
+ABSENT o_coffinJohann
+MESSAGE "You start digging. After a few hours the shovel hits a wooden coffin. Carefully you wipe the soil off the lid."
+CREATE o_coffinJohann
+CREATE o_soilPile
+DONE
+
+> OPEN COFFIN
+PRESENT o_coffinJohann
+ABSENT o_skeleton
+CREATE o_skeleton
+CREATE o_bottleHolyWater
+MESSAGE "As one might expect, the coffin contains the skeletonised remains of a clergyman. Next to the body there is a bottle. Cold shivers run down your spine as you realise it's the bottle of holy water from last night. Is Father Johann the priest you spoke to? How can that be? There also is a small note. You pick it up and read the words 'It's the light they avoid.' before it crumbles to dust."
+DONE
+
+> USE WATER
+> USE BOTTLE
+PRESENT o_bottleHolyWater
+PRESENT o_soilPile
+ISAT o_soilHoly NOTCREATED
+MESSAGE "You drip some holy water on the soil to bless it."
+CREATE o_soilHoly
+DESTROY o_soilPile
+DONE
+
+> USE WATER
+> USE BOTTLE
+CARRIED o_bottleHolyWater
+ATLT 15
+MESSAGE "You don't want to waste it. Father Johann made sure you get this for a reason."
+DONE
+
+> SLEEP _
+> USE MATTRESS
+PRESENT o_mattress
+CARRIED o_blanket
+CARRIED o_bottleHolyWater
+CARRIED o_soilHoly
+MESSAGE "It's getting dark again soon so it definitely is better to stay here for a while. You lay to rest and wait for the night to end. As the first rays of sun shine through the small window, you set off for the old manor.#n"
+DESTROY o_shovel
+ANYKEY
+GOTO 15
+RESTART
+
+> SLEEP _
+> USE MATTRESS
+AT 14
+MESSAGE "It's a good idea to hide here for a while, but you feel there is still something that needs to be done first."
+DONE
+
+> SEARCH BOOKS
+AT 17
+ABSENT o_book
+MESSAGE "You examine the shelves carefully and recognise a book that looks odd to you."
+CREATE o_book
+DONE
+
+> USE BOOK
+PRESENT o_book
+ABSENT o_passageDown
+MESSAGE "It looks like you can either push or pull it."
+DONE
+
+> PUSH BOOK
+PRESENT o_book
+ABSENT o_passageDown
+MESSAGE "It doesn't move in that direction."
+DONE
+
+> PULL BOOK
+PRESENT o_book
+ABSENT o_passageDown
+MESSAGE "You pull the book a little bit and a hidden mechanism makes an oaken cabinet slide to the side. What appears behind it is a passage that seems to lead down to a yet unknown place."
+CREATE o_passageDown
+DONE
+
+#ifdef "bit16"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+XPICTURE 20
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it.#n"
+LET picToLoad 20
+COPYFF picToLoad refreshMaluva
+ANYKEY
+RESTART
+#endif
+
+#ifdef "cpc"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+XPICTURE 20
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it."
+LET picToLoad 20
+COPYFF picToLoad refreshMaluva
+DONE
+#endif
+
+#ifdef "next"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+XPICTURE 20
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it."
+LET picToLoad 20
+COPYFF picToLoad refreshMaluva
+DONE
+#endif
+
+#ifdef "cp4"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+XPICTURE 20
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it."
+LET picToLoad 20
+COPYFF picToLoad refreshMaluva
+DONE
+#endif
+
+#ifdef "c64"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+XPICTURE 20
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it."
+LET picToLoad 20
+COPYFF picToLoad refreshMaluva
+DONE
+#endif
+
+#ifdef "plus3"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it."
+DONE
+#endif
+
+#ifdef "esxdos"
+> USE BLANKET
+PRESENT o_window
+PRESENT o_blanket
+SWAP o_window o_windowCovered
+DESTROY o_blanket
+MESSAGE "You cover the window with the blanket, so that only very little daylight can penetrate it."
+DONE
+#endif
+
+> USE SOIL
+PRESENT o_soilHoly
+PRESENT o_coffinOfVampire
+ISNOTAT o_windowCovered 17
+MESSAGE "That is surely the way to get the vampire out of his coffin, but that's just half of the plan and you know it."
+DONE
+
+> USE SOIL
+PRESENT o_soilHoly
+PRESENT o_coffinOfVampire
+ISAT o_windowCovered 17
+DESTROY o_soilHoly
+MESSAGE "You scatter the holy soil around the coffin and the thing inside screams in pain. As the lid of the coffin begins to move, you run up to the library, where you've prepared everything for the upcoming fight. Whatever it may cost, you will send this creature back to hell so that the poor souls you've met in Rabenstein will finally be free. As you turn around, you face the wrath of the vampire. Angry he looks at you and whispers: 'Prepare to die!'#n"
+PLACE o_vampireCount 17
+SET inFight
+ANYKEY
+GOTO 17
+RESTART
+
+> N _
+> S _
+> W _
+> E _
+> D _
+EQ inFight YES
+MESSAGE "You won't go out of here until you've sent that vampire straight back to hell."
+DONE
+
+> D _
+PRESENT o_passageDown
+GOTO 18
+RESTART
+
+> USE BLANKET
+PRESENT o_windowCovered
+PRESENT o_vampireCount
+MESSAGE "Now that you've lured the vampire here, you should pull the blanket from the window."
+DONE
+
+> USE BLANKET
+PRESENT o_windowCovered
+PRESENT o_vampireInPain
+MESSAGE "Now that you've lured the vampire here, you should pull the blanket from the window."
+DONE
+
+> USE BOTTLE
+> USE WATER
+PRESENT o_bottleHolyWater
+PRESENT o_vampireCount
+MESSAGE "You smash the bottle of holy water into the vampire's face. He's trying to grab you, but he can't see you now."
+SWAP o_vampireCount o_vampireInPain
+DESTROY o_bottleHolyWater
+DONE
+
+> PULL BLANKET
+PRESENT o_vampireCount
+MESSAGE "The vampire is incredibly fast, so you should distract him first before you pull the blanket."
+DONE
+
+> PULL BLANKET
+PRESENT o_vampireInPain
+MESSAGE "You remove the blanket from the window. Daylight hits the vampire. His pale skin begins to burn as he screams horribly. Within seconds, it's all over.#n"
+ANYKEY
+GOTO 20
+RESTART
+
+> TALK VAMPIRE
+PRESENT o_vampireCount
+MESSAGE "There's nothing left to say."
+DONE
+
+> TALK VAMPIRE
+PRESENT o_vampireInPain
+MESSAGE "There's nothing left to say."
+DONE
+
+> XYZZY _
+MESSAGE "Seriously?"
+DONE
+
+> FEED HORSES
+PRESENT o_horses
+MESSAGE "You ran out of carrots."
+DONE
+
+> USE CARRIAGE
+> ENTER CARRIAGE
+PRESENT o_carriage
+MESSAGE "The carriage won't move now so there is no point in doing this."
+DONE
+
+> OPEN DOOR
+PRESENT o_churchDoorClosed
+MESSAGE "You're pretty sure it needs to be opened from the inside."
+DONE
+
+> OPEN DOOR
+PRESENT o_churchDoorOpen
+MESSAGE "It is already open."
+DONE
+
+> CLOSE DOOR
+PRESENT o_churchDoorOpen
+MESSAGE "Why? You decide it should remain opened."
+DONE
+
+> CLOSE DOOR
+PRESENT o_stableDoorUnlocked
+MESSAGE "No need to lock it again. Nobody steals tired hores anyway."
+DONE
+
+> SIT _
+MESSAGE "You'd love to sit down for a while but there are things you need to take care of."
+DONE
+
+> EAT _
+MESSAGE "As much as you would like to indulge in your physical well-being, there is no time for that right now."
+DONE
+
+> USE CRUCIFI
+PRESENT o_cloakedFigure
+PRESENT o_crucifix
+MESSAGE "The figure hisses at you but doesn't stop attacking the poor coachman."
+DONE
+
+> N _
+AT 13
+MESSAGE "You think is better to not go any further now. It is very obvious what the priest wanted you to do but it's getting dark again soon. You should rather make sure you're prepared and then find shelter. You won't want to fight the thing that hides in the manor after nightfall."
+DONE
+
+> S _
+> W _
+> E _
+AT 8
+MESSAGE m_wanderOff
+DONE
+
+> S _
+> W _
+> E _
+AT 15
+MESSAGE m_breakTheCurse
+DONE
+
+> OPEN COFFIN
+AT 18 
+MESSAGE "The lid's so heavy you can't lift it."
+DONE
+
+/PRO 6
+
+; Initialization process.
+; Called from PRO 0.
+
+; Creates status line window.
+
+#ifdef "bit16"
+> 
+_       _       WINDOW 0
+                PICTURE 0
+                DISPLAY @DarkF
+
+>
+_       _       WINDOW 2
+                WINAT 13 0
+                WINSIZE 1 COLS
+#endif
+
+#ifdef "c64"
+>
+_       _       WINDOW 2
+                WINAT 14 0
+                WINSIZE 1 COLS
+#endif
+#ifdef "cpc"
+>
+_       _       WINDOW 2
+                WINAT 14 0
+                WINSIZE 1 COLS
+#endif
+#ifdef "next"
+>
+_       _       WINDOW 2
+                WINAT 14 0
+                WINSIZE 1 COLS
+#endif
+#ifdef "cp4"
+>
+_       _       WINDOW 2
+                WINAT 14 0
+                WINSIZE 1 COLS
+#endif
+#ifdef "plus3"
+>
+_       _       WINDOW 2
+                WINAT 6 0
+                WINSIZE 1 COLS
+#endif
+#ifdef "esxdos"
+>
+_       _       WINDOW 2
+                WINAT 6 0
+                WINSIZE 1 COLS
+#endif
+
+; 80 columns status line
+
+>
+_       _       LT GFlags 128
+                WINSIZE 1 80
+
+; -Initial paper-ink colours.
+; -Rearrange text and graphics windows position.
+
+>
+_       _       PAPER 0
+                INK 1
+                CLS
+                PROCESS 9
+
+; -Describes location 0 (usually presentation screen).
+; -Displays introduction text.
+; -Starts flags resetting loop.
+
+#ifndef "nographics"
+>
+_       _       XPICTURE 0
+                DESC 0
+                ANYKEY
+                CLS
+                MESSAGE 14
+                ANYKEY
+                CLEAR 255
+#endif
+#ifdef "plus3"
+>
+_       _       DESC 0
+                XPICTURE 0
+                ANYKEY
+                XPICTURE 2 ; blank screen to clear windows
+                CLS
+                CLEAR 255
+#endif
+#ifdef "esxdos"
+>
+_       _       DESC 0
+                XPICTURE 0
+                ANYKEY
+                XPICTURE 2 ; blank screen to clear windows
+                CLS
+                CLEAR 255
+#endif
+
+; Clear all flags save 29 (Gflags).
+
+>
+_       _       NOTEQ 255 GFlags
+                CLEAR @255
+
+>
+_       _       PLUS 255 1
+                LT 255 255
+                SKIP -2
+
+; -Reset object locations to original values (established in OBJ).
+; -Set default values for flags 52, 37, 46, 47 and 53.
+; -Set initial location..
+
+>
+_       _       RESET
+                LET Strength 10
+                LET MaxCarr 10
+                SET CPNoun
+                SET CPAdject
+                LET OFlags 64
+#ifdef "plus3"
+                XPICTURE 1
+                GOTO 21
+#endif
+#ifdef "esxdos"
+                XPICTURE 1
+                GOTO 21
+#endif
+#ifndef "nographics"
+                GOTO 8 ; <--- startup location
+#endif
+#ifdef "amiga" 
+                INK 2
+#endif
+#ifdef "st" 
+                INK 2
+#endif
+#ifdef "pc" 
+                INK 4
+#endif
+
+/PRO 7
+
+; Text "up.
+
+#ifdef "c64"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "cp4"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "cpc"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "next"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "bit16"
+>
+_       _       WINDOW 1
+                WINAT 14 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "plus3"
+>
+_       _       WINDOW 1
+                WINAT 7 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "esxdos"
+>
+_       _       WINDOW 1
+                WINAT 7 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+
+/PRO 8
+
+; Text "down."
+
+#ifdef "c64"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "cp4"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "cpc"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "next"
+>
+_       _       WINDOW 1
+                WINAT 15 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "bit16"
+>
+_       _       WINDOW 1
+                WINAT 14 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "plus3"
+>
+_       _       WINDOW 1
+                WINAT 7 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+#ifdef "esxdos"
+>
+_       _       WINDOW 1
+                WINAT 7 0
+                WINSIZE ROWS 127
+                CLS
+#endif
+
+/PRO 9
+
+; Set text window position.
+
+>
+_       _       
+;PICTURE @Player
+PROCESS 8
+DONE
+
+>
+_       _       PROCESS 7
+
+/PRO 10
+
+; Automatic exits listing
+; WARNING! It uses flags 100 and 101
+
+>
+_       _       MES 0
+                CLEAR 101
+                LET 33 2
+
+>
+_       _       COPYFF 38 100
+                MOVE 100
+                MES @33
+                PLUS 101 1
+
+>
+_       _       PLUS 33 1
+                LT 33 14
+                SKIP -2
+
+>
+_       _       NOTZERO 101
+                NEWLINE
+                DONE
+
+>
+_       _       MESSAGE 1
+
+/PRO 11
+; deactivate splitscreen mode on certain systems
+> _ _
+AT 20
+#ifdef "next"
+XNEXTCLS
+#endif
+#ifdef "c64"
+XSPLITSCR 0
+#endif
+#ifdef "cpc"
+XSPLITSCR 0
+#endif
+#ifndef "nographics"
+;
+; resize the windows for the game's ending
+;
+WINDOW 2
+WINAT 0 0 
+WINSIZE 1 COLS
+PAPER 0
+CLS
+
+> _ _
+AT 20
+WINDOW 1
+WINAT 1 0
+WINSIZE ROWS 127
+CLS
+DONE
+#endif
+
+; Updates status line
+#ifdef "cpc"
+> _ _ 
+WINDOW 2
+PAPER 3 ; dynamic allocation based on palette
+INK 0
+CLS
+#endif 
+#ifdef "bit16"
+> _ _ 
+WINDOW 2
+PAPER 3 ; dynamic allocation based on palette
+INK 0
+CLS
+#endif 
+#ifdef "c64"
+> _ _ 
+WINDOW 2
+PAPER 10 ;C= washed out red
+INK 0
+CLS
+#endif
+#ifdef "cp4"
+> _ _ 
+WINDOW 2
+PAPER 12 ;C= medium gray
+INK 0
+CLS
+#endif
+#ifdef "plus3"
+> _ _ 
+WINDOW 2
+PAPER 13 ; hardcoded allocation to match interface
+INK 0
+CLS
+#endif
+#ifdef "esxdos"
+> _ _ 
+WINDOW 2
+PAPER 13 ; hardcoded allocation to match interface
+INK 0
+CLS
+#endif
+#ifdef "next"
+> _ _ 
+WINDOW 2
+PAPER 13 ; hardcoded allocation to match interface
+INK 0
+CLS
+#endif 
+
+; If dark, says it so at the status line and leaves the process.
+
+>
+_       _       NOTZERO DarkF
+                MES 36
+                PROCESS 12
+                DONE
+
+; Prints location name at status line.
+; If you add more locations after using trizbort,
+; You can add its text here with a condition as:
+; _       _       AT loc num
+;                 MES XX
+; where XX is the message with the text to write.
+
+>
+_       _       AT 1
+                MES 16
+
+>
+_       _       AT 2
+                MES 17
+
+>
+_       _       AT 3
+                MES 18
+
+>
+_       _       AT 4
+                MES 19
+
+>
+_       _       AT 19
+                MES 19
+
+>
+_       _       AT 5
+                MES 20
+
+>
+_       _       AT 6
+                MES 21
+
+>
+_       _       AT 7
+                MES 22
+
+>
+_       _       AT 8
+                MES 23
+
+>
+_       _       AT 9
+                MES 24
+
+>
+_       _       AT 10
+                MES 25
+
+>
+_       _       AT 11
+                MES 26
+
+>
+_       _       AT 12
+                MES 27
+
+>
+_       _       AT 13
+                MES 28
+
+>
+_       _       AT 14
+                MES 29
+
+>
+_       _       AT 15
+                MES 30
+
+>
+_       _       AT 16
+                MES 31
+
+>
+_       _       AT 17
+                MES 32
+
+>
+_       _       AT 18
+                MES 33
+
+#ifdef "plus3"
+>
+_       _       AT 21
+                MES 42
+
+>
+_       _       AT 20
+                MES 43
+#endif
+#ifdef "esxdos"
+>
+_       _       AT 21
+                MES 42
+
+>
+_       _       AT 20
+                MES 43
+#endif
+
+>
+_       _       PROCESS 12
+
+/PRO 12
+
+; Print turns at status line
+
+>
+_       _       TAB Turns_TAB
+                LT 29 128
+                TAB 67
+
+>
+_       _       MES 15
+                DPRINT Turns
+                WINDOW 1
+
+/PRO 13
+;
+; graphics handling and disk swap feature
+;
+>
+_       _       AT 20 ; early return for the ending. We don't need code below. 
+                DONE
+                
+>
+_       _       COPYFF Player picToLoad
+
+>
+_       _       AT 17
+                PRESENT o_windowCovered
+                LET picToLoad 20             
+>
+_       _       NOTSAME picToLoad refreshMaluva
+#ifdef "bit16"
+                CLEAR 20
+#endif
+                XPICTURE @picToLoad
+                GT 20 127
+                CLS
+#ifdef "cpc"
+                MESSAGE "#n#n  PLEASE SWAP YOUR RABENSTEIN DISC NOW#n#n"
+#endif
+#ifdef "c64"
+                MESSAGE "#n#n  PLEASE SWAP YOUR RABENSTEIN DISK NOW#n#n"
+#endif
+#ifdef "cp4"
+                MESSAGE "#n#n  PLEASE SWAP YOUR RABENSTEIN DISK NOW#n#n"
+#endif
+                ANYKEY
+                SKIP -1
+
+>
+_       _
+#ifdef "c64"
+                XSPLITSCR 1
+#endif
+                COPYFF picToLoad refreshMaluva
+
+#ifdef "next"
+/PRO 14
+; END CondAct override for Spectrum Next
+#define yesScancode 121 ; English "y"
+#define noScancode 110  ; "n"
+
+> _     _       SYSMESS 13 ; Another try?
+                NEWLINE
+                NEWLINE
+
+> _     _       INKEY 
+                SKIP 1  ; Something pressed
+
+> _     _       SKIP -2 ; Nothing pressed, wait for keypress
+
+
+> _     _       EQ 60 yesScancode
+                GOTO 0
+                RESTART    
+
+> _     _       EQ 60 noScancode
+                XNEXTCLS
+                XNEXTRST          ; Next cleanup and machine reset
+                
+> _     _       SKIP -5  ; neither "n" nor "y" pressed
+#endif
+
+/END

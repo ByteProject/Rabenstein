@@ -1,0 +1,11 @@
+#gitignore for RABENSTEIN
+
+Adventuron/
+Releases/
+c64_rabenstein.d64
+plus4_rabenstein.d64
+rabenstein.adf
+rabenstein.st
+rabenstein_side1.dsk
+rabenstein_side2.dsk
+

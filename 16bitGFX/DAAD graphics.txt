@@ -1,0 +1,49 @@
+So there goes a brief tutorial!
+
+1st of all, take all your 320x104 graphics and paste them into 320x200 pics. Don't strecht or scale them, just leave the extra space filled with any colour.
+If you're following DAAD's default, renaming each file with the number of its location is not mandatory, but will make life easier later.
+Now use your favourite graphic editor to... no, wait, what does "favourite" exactly mean here? Well the aim is to get as many 320x200 16 coloured PI1 files as graphics needed. Any editor that can do that and has good palette manipulation features will do. Theorically Grafx2 should do the job, but for some reason I've never been able to make it work properly under windows. My best solution has been using GIMP, installing an IFF plug-in. I saved the files in IFF format and then loaded them in Deluxe Paint in the Atari ST emulator, which can save them as PI1. But everyone has a favourite route to do this.
+
+But before saving the IFF or PI1 files some palette rearranging must be done!
+
+In GIMP I convert the files to 16 colours (any graphics tool that can do this is OK) and now you need to have a clear idea about which PAPER and INK colours the final game will have.
+
+Let's supposse they are the usual BLACK and WHITE. Every file may have its own different 16 colour palette provided that:
+
+-There are always a BLACK and WHITE colours included.
+
+-They are always at the same position in the palette. As a default, 16 bit DAAD uses colour 0 for PAPER and 15 for INK (you can always change that with PAPER and INK condacts in your .SCE). That means that every palette MUST have BLACK in its 0 position and WHITE at 15.
+
+OK! So now I have my 16 coloured and palette-rearranged IFF files. It's time to setup my Atari ST emulator. I use Steem SSE under windows. Make sure you use a configuration with as much RAM memory as the emulator allows. If the emulator also can use a folder as a Hard Drive, use it. If you have the time to install some Atari ST RAM-Disk software, install it (it will make life way mooooore easy later)
+
+In the Atari machine, I use Deluxe Paint to load the IFF files and save them as PI1. You can skip that part if you managed to get PI1 files before.
+Create a folder in the hard drive to put Atari DAAD files there, specially the DMG program.
+
+Time to run DMG! (click on DMG.PRG icon)
+
+Now FILE -> OPEB DB to create your graphics database. If you have a working Ram-Disk, open it there (but don't forget to copy it from Ram-Disk to C: or floppy after quiting DMG and before leaving the emulator!!!) Name it as you wish, but PARTXXX.DAT is the usual convention, being XXX 1, 2 or 3.
+
+There are a lot of features involved now, but the basic flow is essentially:
+
+-FILE -> LOAD PI1 : Load any of your PI1 pics (you can go to PIC -> VIEW to take a look at the 320x200 image)
+
+-DB -> MAKE PIC : It will ask for a location number. If you're using the image for location 1, say 1, you know. Now it will show the pic with a rectangle. Use the W, X, A and D keys to change the rectangle size. Combine them with SHFT to move the rectangle position. Hit RETURN when the rectangle cover the desired region, the rest will be discarded (or ESC to leave without doing nothing)
+
+-Do the same for each and every graphic
+
+-FILE -> QUIT when done. Database will be automatically saved. Your PARTXXX.DAT file will be valid for botn AMIGA and ST. For MS-DOS use DB -> BUILD IBM
+
+-Don't forget to copy your file from Ram-Disk to anywhere else if you were using Ram-Disk !!!
+
+-There's much more to DMG, but this is the very basic stuff to get started!
+
+Hope it helps! Yelp for more help if needed! :)
+
+
+Aha, when pasting your 320x104 graphic into a 320x200 image, do it just some... 8 pixels (I think it was exactly 8 pixels!) below the top of the image, leaving enough space for the bar.
+At DMG, select your image with the rectangle covering everything needed leaving out the space for the bar. When playing the game, the interpreter will place the graphic at the very same position the rectangle was.
+You will have to adjust manually (maybe with some trial and error) the location of the main text window at .SCE. 
+I think I'm not forgetting anything! :)
+
+
+
